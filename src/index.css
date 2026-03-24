@@ -1,0 +1,146 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 50 100% 96%;
+    --foreground: 0 0% 5%;
+
+    --card: 50 100% 98%;
+    --card-foreground: 0 0% 5%;
+
+    --popover: 50 100% 98%;
+    --popover-foreground: 0 0% 5%;
+
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 46 97% 65%;
+    --secondary-foreground: 0 0% 5%;
+
+    --muted: 45 40% 90%;
+    --muted-foreground: 0 0% 35%;
+
+    --accent: 185 62% 55%;
+    --accent-foreground: 0 0% 5%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 5%;
+    --input: 0 0% 5%;
+    --ring: 262 83% 58%;
+
+    --radius: 0.5rem;
+
+    --income: 152 72% 40%;
+    --income-foreground: 0 0% 100%;
+    --income-light: 152 60% 88%;
+
+    --expense: 0 84% 60%;
+    --expense-foreground: 0 0% 100%;
+    --expense-light: 0 70% 92%;
+
+    --chart-1: 262 83% 58%;
+    --chart-2: 152 72% 40%;
+    --chart-3: 0 84% 60%;
+    --chart-4: 46 97% 65%;
+    --chart-5: 185 62% 55%;
+    --chart-6: 330 80% 60%;
+
+    --shadow-brutal: 4px 4px 0px 0px hsl(0 0% 5%);
+    --shadow-brutal-sm: 2px 2px 0px 0px hsl(0 0% 5%);
+    --shadow-brutal-lg: 6px 6px 0px 0px hsl(0 0% 5%);
+
+    --sidebar-background: 50 100% 96%;
+    --sidebar-foreground: 0 0% 5%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 46 97% 65%;
+    --sidebar-accent-foreground: 0 0% 5%;
+    --sidebar-border: 0 0% 5%;
+    --sidebar-ring: 262 83% 58%;
+  }
+
+  .dark {
+    --background: 240 10% 8%;
+    --foreground: 50 100% 96%;
+
+    --card: 240 10% 12%;
+    --card-foreground: 50 100% 96%;
+
+    --popover: 240 10% 12%;
+    --popover-foreground: 50 100% 96%;
+
+    --primary: 262 83% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 46 90% 55%;
+    --secondary-foreground: 0 0% 5%;
+
+    --muted: 240 10% 18%;
+    --muted-foreground: 50 20% 60%;
+
+    --accent: 185 62% 50%;
+    --accent-foreground: 0 0% 5%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 50 100% 96%;
+    --input: 50 100% 96%;
+    --ring: 262 83% 65%;
+
+    --income: 152 72% 45%;
+    --income-foreground: 0 0% 100%;
+    --income-light: 152 40% 18%;
+
+    --expense: 0 84% 60%;
+    --expense-foreground: 0 0% 100%;
+    --expense-light: 0 40% 18%;
+
+    --chart-1: 262 83% 65%;
+    --chart-2: 152 72% 45%;
+    --chart-3: 0 84% 60%;
+    --chart-4: 46 90% 55%;
+    --chart-5: 185 62% 50%;
+    --chart-6: 330 80% 60%;
+
+    --shadow-brutal: 4px 4px 0px 0px hsl(50 100% 96%);
+    --shadow-brutal-sm: 2px 2px 0px 0px hsl(50 100% 96%);
+    --shadow-brutal-lg: 6px 6px 0px 0px hsl(50 100% 96%);
+
+    --sidebar-background: 240 10% 10%;
+    --sidebar-foreground: 50 100% 96%;
+    --sidebar-primary: 262 83% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 46 90% 55%;
+    --sidebar-accent-foreground: 0 0% 5%;
+    --sidebar-border: 50 100% 96%;
+    --sidebar-ring: 262 83% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .shadow-brutal {
+    box-shadow: var(--shadow-brutal);
+  }
+  .shadow-brutal-sm {
+    box-shadow: var(--shadow-brutal-sm);
+  }
+  .shadow-brutal-lg {
+    box-shadow: var(--shadow-brutal-lg);
+  }
+}
