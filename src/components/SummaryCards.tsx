@@ -1,18 +1,26 @@
 import { useTransactions } from "@/context/TransactionContext";
-import { formatRupiah } from "@/lib/constants";
+import { formatRupiah, getMonthYear } from "@/lib/constants";
 import { TrendingUp, TrendingDown, Wallet, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Props {
   balanceHidden: boolean;
   onToggleHidden: () => void;
+  monthFilter: string;
 }
 
-export default function SummaryCards({ balanceHidden, onToggleHidden }: Props) {
+export default function SummaryCards({ balanceHidden, onToggleHidden, monthFilter }: Props) {
   const { transactions } = useTransactions();
 
-  const totalIncome = transactions.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
-  const totalExpense = transactions.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
+  // Filter transactions by selected month
+  const monthTransactions = monthFilter === "none" 
+    ? []
+    : monthFilter === "all"
+    ? transactions
+    : transactions.filter((t) => getMonthYear(t.date) === monthFilter);
+
+  const totalIncome = monthTransactions.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
+  const totalExpense = monthTransactions.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
   const balance = totalIncome - totalExpense;
 
   const mask = "••••••••";
@@ -22,6 +30,11 @@ export default function SummaryCards({ balanceHidden, onToggleHidden }: Props) {
     { label: "Pemasukan", value: totalIncome, icon: TrendingUp, color: "text-income", bg: "bg-income-light" },
     { label: "Pengeluaran", value: totalExpense, icon: TrendingDown, color: "text-expense", bg: "bg-expense-light" },
   ];
+
+  // Only show if a month is selected
+  if (monthFilter === "none") {
+    return null;
+  }
 
   return (
     <div className="space-y-3">

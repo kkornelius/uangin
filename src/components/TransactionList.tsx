@@ -1,12 +1,18 @@
 import { useState, useMemo } from "react";
 import { useTransactions, Transaction } from "@/context/TransactionContext";
 import { formatRupiah, getMonthYear, formatMonthLabel } from "@/lib/constants";
-import { Pencil, Trash2, ArrowUpDown, Plus, Search, Download } from "lucide-react";
+import { Pencil, Trash2, ArrowUpDown, Plus, Search, Download, Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import TransactionForm from "./TransactionForm";
 import { toast } from "sonner";
+
+interface Props {
+  monthFilter: string;
+  onMonthFilterChange: (month: string) => void;
+}
 
 function exportCSV(transactions: Transaction[]) {
   const header = "Tanggal,Tipe,Kategori,Deskripsi,Jumlah\n";
@@ -23,13 +29,81 @@ function exportCSV(transactions: Transaction[]) {
   toast.success("CSV berhasil diunduh!");
 }
 
-export default function TransactionList() {
-  const { transactions, deleteTransaction } = useTransactions();
+function importCSV(file: File, addTransaction: (t: Omit<Transaction, "id">) => void) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const text = e.target?.result as string;
+      const lines = text.trim().split("\n");
+      if (lines.length < 2) {
+        toast.error("File CSV kosong atau tidak valid!");
+        return;
+      }
+
+      const header = lines[0].split(",").map((h) => h.trim().toLowerCase());
+      const expectedHeader = ["tanggal", "tipe", "kategori", "deskripsi", "jumlah"];
+      if (JSON.stringify(header) !== JSON.stringify(expectedHeader)) {
+        toast.error("Format CSV tidak sesuai! Gunakan format hasil download.");
+        return;
+      }
+
+      let imported = 0;
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        // Handle CSV parsing with quoted fields
+        const parts: string[] = [];
+        let current = "";
+        let inQuotes = false;
+        for (let j = 0; j < line.length; j++) {
+          const char = line[j];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === "," && !inQuotes) {
+            parts.push(current.trim().replace(/^"|"$/g, ""));
+            current = "";
+          } else {
+            current += char;
+          }
+        }
+        parts.push(current.trim().replace(/^"|"$/g, ""));
+
+        if (parts.length < 5) continue;
+
+        const date = parts[0].trim();
+        const type = parts[1].trim() === "Pemasukan" ? "income" : "expense";
+        const category = parts[2].trim();
+        const description = parts[3].trim();
+        const amount = parseFloat(parts[4].trim());
+
+        if (!date || !category || !description || isNaN(amount) || amount <= 0) {
+          continue;
+        }
+
+        addTransaction({ type, amount, category, description, date });
+        imported++;
+      }
+
+      if (imported > 0) {
+        toast.success(`${imported} transaksi berhasil diimpor!`);
+      } else {
+        toast.error("Tidak ada transaksi yang valid dalam file!");
+      }
+    } catch (err) {
+      toast.error("Gagal memproses file CSV!");
+    }
+  };
+  reader.readAsText(file);
+}
+
+export default function TransactionList({ monthFilter, onMonthFilterChange }: Props) {
+  const { transactions, deleteTransaction, addTransaction } = useTransactions();
   const [formOpen, setFormOpen] = useState(false);
   const [editTx, setEditTx] = useState<Transaction | null>(null);
-  const [monthFilter, setMonthFilter] = useState("none");
   const [sortAsc, setSortAsc] = useState(false);
   const [search, setSearch] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const months = useMemo(() => {
     const set = new Set(transactions.map((t) => getMonthYear(t.date)));
@@ -60,7 +134,21 @@ export default function TransactionList() {
 
   const handleDelete = (id: string) => {
     deleteTransaction(id);
+    setDeleteConfirm(null);
     toast.success("Transaksi dihapus!");
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.name.endsWith(".csv")) {
+        toast.error("Hanya file CSV yang didukung!");
+        return;
+      }
+      importCSV(file, addTransaction);
+    }
+    // Reset input
+    e.target.value = "";
   };
 
   const showList = monthFilter !== "none";
@@ -82,7 +170,9 @@ export default function TransactionList() {
               />
             </div>
           )}
-          <Select value={monthFilter} onValueChange={setMonthFilter}>
+          
+
+          <Select value={monthFilter} onValueChange={onMonthFilterChange}>
             <SelectTrigger className="w-[180px] border-2 border-border shadow-brutal-sm">
               <SelectValue placeholder="Pilih Bulan" />
             </SelectTrigger>
@@ -104,6 +194,13 @@ export default function TransactionList() {
               </Button>
             </>
           )}
+          {/* Upload should be available even before a month is selected */}
+          <label title="Upload CSV" className="ml-2 inline-flex">
+            <input type="file" accept=".csv" onChange={handleFileUpload} className="hidden" />
+            <span className="inline-flex items-center justify-center h-9 w-9 rounded-md border-2 border-border shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all cursor-pointer">
+              <Upload className="h-4 w-4" />
+            </span>
+          </label>
           <Button onClick={() => { setEditTx(null); setFormOpen(true); }} size="sm" className="border-2 border-border shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all font-bold">
             <Plus className="h-4 w-4 mr-1" /> Tambah
           </Button>
@@ -152,7 +249,7 @@ export default function TransactionList() {
                   <Button variant="outline" size="icon" className="h-8 w-8 border-2 border-border shadow-brutal-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all" onClick={() => { setEditTx(tx); setFormOpen(true); }}>
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="outline" size="icon" className="h-8 w-8 border-2 border-border text-expense hover:text-expense shadow-brutal-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all" onClick={() => handleDelete(tx.id)}>
+                  <Button variant="outline" size="icon" className="h-8 w-8 border-2 border-border text-expense hover:text-expense shadow-brutal-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all" onClick={() => setDeleteConfirm(tx.id)}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
@@ -163,6 +260,28 @@ export default function TransactionList() {
       )}
 
       <TransactionForm open={formOpen} onClose={() => setFormOpen(false)} editTx={editTx} />
+
+      <AlertDialog open={deleteConfirm !== null} onOpenChange={(v) => !v && setDeleteConfirm(null)}>
+        <AlertDialogContent className="border-2 border-border shadow-brutal-lg rounded-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-bold text-lg">Hapus Transaksi?</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              Apakah Anda yakin ingin menghapus transaksi ini? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-2 justify-end">
+            <AlertDialogCancel className="border-2 border-border shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all font-bold">
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
+              className="bg-expense hover:bg-expense/90 text-white border-2 border-border shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all font-bold"
+            >
+              Hapus
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

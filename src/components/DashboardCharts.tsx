@@ -12,34 +12,69 @@ const PIE_COLORS = [
   "hsl(330, 80%, 60%)",
 ];
 
-export default function DashboardCharts() {
+interface Props {
+  monthFilter: string;
+}
+
+export default function DashboardCharts({ monthFilter }: Props) {
   const { transactions } = useTransactions();
 
+  const filteredTx = useMemo(() => {
+    if (monthFilter === "none") return [] as typeof transactions;
+    if (monthFilter === "all") return transactions;
+    return transactions.filter((t) => getMonthYear(t.date) === monthFilter);
+  }, [transactions, monthFilter]);
+
   const barData = useMemo(() => {
-    const map: Record<string, { income: number; expense: number }> = {};
-    transactions.forEach((t) => {
-      const key = getMonthYear(t.date);
-      if (!map[key]) map[key] = { income: 0, expense: 0 };
-      map[key][t.type] += t.amount;
-    });
-    return Object.entries(map)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .slice(-6)
-      .map(([k, v]) => ({ name: formatMonthLabel(k), income: v.income, expense: v.expense }));
-  }, [transactions]);
+    if (monthFilter === "none") return [];
+    if (monthFilter === "all") {
+      const map: Record<string, { income: number; expense: number }> = {};
+      transactions.forEach((t) => {
+        const key = getMonthYear(t.date);
+        if (!map[key]) map[key] = { income: 0, expense: 0 };
+        map[key][t.type] += t.amount;
+      });
+      return Object.entries(map)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .slice(-6)
+        .map(([k, v]) => ({ name: formatMonthLabel(k), income: v.income, expense: v.expense }));
+    }
+
+    // Specific month -> single entry
+    const income = filteredTx.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
+    const expense = filteredTx.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
+    return [{ name: formatMonthLabel(monthFilter), income, expense }];
+  }, [transactions, filteredTx, monthFilter]);
 
   const pieData = useMemo(() => {
+    if (monthFilter === "none") return [];
     const map: Record<string, number> = {};
-    transactions.filter((t) => t.type === "expense").forEach((t) => {
+    filteredTx.filter((t) => t.type === "expense").forEach((t) => {
       map[t.category] = (map[t.category] || 0) + t.amount;
     });
     return Object.entries(map).map(([name, value]) => ({ name, value }));
-  }, [transactions]);
+  }, [filteredTx, monthFilter]);
 
   if (transactions.length === 0) {
     return (
       <div className="rounded-md bg-card border-2 border-border shadow-brutal p-8 text-center text-muted-foreground font-semibold">
         Belum ada transaksi. Tambahkan transaksi pertamamu!
+      </div>
+    );
+  }
+
+  // When no month selected, show reset/placeholder graphs
+  if (monthFilter === "none") {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="rounded-md bg-card border-2 border-border shadow-brutal p-5 animate-fade-in">
+          <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wide">Pemasukan vs Pengeluaran</h3>
+          <div className="h-[260px] flex items-center justify-center text-muted-foreground">Pilih bulan untuk menampilkan grafik.</div>
+        </div>
+        <div className="rounded-md bg-card border-2 border-border shadow-brutal p-5 animate-fade-in">
+          <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wide">Pengeluaran per Kategori</h3>
+          <div className="h-[260px] flex items-center justify-center text-muted-foreground">Pilih bulan untuk menampilkan grafik.</div>
+        </div>
       </div>
     );
   }
@@ -75,7 +110,7 @@ export default function DashboardCharts() {
                 outerRadius={90}
                 strokeWidth={2}
                 stroke="hsl(0, 0%, 5%)"
-                label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                label={({ percent }) => `${Math.round(percent * 100)}%`}
                 labelLine={false}
               >
                 {pieData.map((_, i) => (

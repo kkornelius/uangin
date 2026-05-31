@@ -1,84 +1,89 @@
 <div align="center">
 
-# 💸 Uangin
+# 💸 Uangin (Update)
 
 ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
 ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
-Designed to help you manage, understand, and improve your cash flow
-
-[**View Live Demo**](https://uangin.vercel.app)
+Aplikasi keuangan sederhana untuk mencatat, menganalisis, dan mengelola pemasukan serta pengeluaran.
 
 </div>
 
-## 📸 Preview
-![Preview](public/image.png) ![Dark Mode](public/imagedark.png)
+## � Screenshot
+![Uangin Screenshot](public/image.png)
 
-## Features
+**Mode Gelap:**
 
-- 💰 **Transaction Management** - Track all your income and expenses in one place
-- 📊 **Visual Analytics** - Charts and graphs to visualize your financial data
-- 🎯 **Category Organization** - Organize transactions by customizable categories
-- 💡 **Summary Cards** - Quick overview of your financial status
-- 🌙 **Dark Mode** - Comfortable viewing in any lighting condition
-- 📱 **Responsive Design** - Works seamlessly on desktop and mobile devices
-- ⚡ **Real-time Updates** - Instant reflection of changes across the app
+![Uangin Dark Mode Screenshot](public/imagedark.png)
 
-## Tech Stack
+## �📌 Ringkas
+Uangin adalah aplikasi React + TypeScript dengan Vite dan Tailwind CSS yang membantu Anda:
+- mencatat transaksi pemasukan dan pengeluaran
+- melihat ringkasan bulanan dan saldo yang disensor saat belum memilih bulan
+- mengekspor / mengimpor transaksi menggunakan CSV
+- mengonfirmasi penghapusan transaksi agar tidak terhapus langsung
+- memvisualisasikan data dalam grafik dan ringkasan yang lebih fokus per bulan
 
-- **Frontend Framework:** React 18 with TypeScript
-- **Build Tool:** Vite
-- **Styling:** Tailwind CSS
-- **UI Components:** shadcn/ui (Radix UI)
+## ✨ Fitur Utama
+- 📁 Tambah, edit, dan hapus transaksi
+- 🗓️ Pilih bulan untuk melihat ringkasan dan daftar transaksi khusus bulan tersebut
+- 🔒 Total saldo disembunyikan secara default sebelum bulan dipilih
+- 📊 Ringkasan per bulan (bukan total keseluruhan)
+- 📈 Grafik pendapatan vs pengeluaran dan distribusi kategori
+- 📥 Impor CSV sesuai format unduhan
+- 📤 Ekspor CSV data transaksi
+- ✅ Konfirmasi sebelum menghapus transaksi
+- 🌙 Dukungan dark mode dan desain responsif
+- 💾 Data tersimpan di `localStorage`
 
-## Getting Started
+## 📂 Format CSV
+File CSV impor harus mengikuti format hasil ekspor:
 
-### Prerequisites
+```csv
+Tanggal,Tipe,Kategori,Deskripsi,Jumlah
+2024-06-01,Pemasukan,Gaji,"Gaji bulan Juni",5000000
+2024-06-02,Pengeluaran,Makan,"Makan siang",50000
+```
 
-- Node.js (v18 or higher)
-- npm or yarn package manager
+## 🚀 Setup Lokal
+### Prasyarat
+- Node.js v18+ 
+- npm
 
-### Installation
-
-1. Clone the repository
+### Instalasi
 ```bash
 git clone https://github.com/kkornelius/uangin.git
 cd uangin
-```
-
-2. Install dependencies
-```bash
 npm install
 ```
 
-3. Start the development server
+### Jalankan
 ```bash
 npm run dev
 ```
 
-The application will be available at `http://localhost:8080`
+Akses aplikasi di `http://localhost:8081` (atau port lain yang dipilih Vite).
 
-## Features in Detail
+## 📦 Perintah NPM
+- `npm run dev` - jalankan development server
+- `npm run build` - bangun aplikasi untuk produksi
+- `npm run preview` - lihat hasil build secara lokal
+- `npm run lint` - jalankan ESLint
+- `npm run test` - jalankan tes dengan Vitest
 
-### Transaction Management
-Create, edit, and delete transactions with support for both income and expense types. Each transaction includes amount, category, description, and date.
+## 🧠 Teknologi
+- React 18 + TypeScript
+- Vite
+- Tailwind CSS
+- shadcn/ui / Radix UI
+- Recharts
+- Sonner toast
 
-### Financial Analytics
-Visualize your spending patterns with interactive charts. Get insights into your monthly income and expenses at a glance.
+## 📌 Catatan
+Aplikasi ini menyimpan data transaksi di browser menggunakan `localStorage`, jadi data akan tetap ada selama tidak dihapus dari browser.
 
-### Categories
-Pre-configured categories for income and expenses, with the flexibility to extend them based on your needs.
+## 📜 Lisensi
+MIT
 
-### Dark Mode
-Toggle between light and dark themes for comfortable viewing at any time of day.
-
-## License
-
-This project is open source and available under the MIT License.
-
-
----
-
-**Built with ❤️ for better financial management**

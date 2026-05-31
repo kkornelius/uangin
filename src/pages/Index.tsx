@@ -9,7 +9,8 @@ import { useDarkMode } from "@/hooks/use-dark-mode";
 
 const Index = () => {
   const [dark, toggleDark] = useDarkMode();
-  const [balanceHidden, setBalanceHidden] = useState(false);
+  const [balanceHidden, setBalanceHidden] = useState(true);
+  const [monthFilter, setMonthFilter] = useState("none");
 
   return (
     <TransactionProvider>
@@ -29,9 +30,9 @@ const Index = () => {
         </header>
 
         <main className="container py-6 space-y-6">
-          <TransactionList />
-          <SummaryCards balanceHidden={balanceHidden} onToggleHidden={() => setBalanceHidden((h) => !h)} />
-          <DashboardCharts />
+          <TransactionList monthFilter={monthFilter} onMonthFilterChange={setMonthFilter} />
+          <SummaryCards balanceHidden={balanceHidden} onToggleHidden={() => setBalanceHidden((h) => !h)} monthFilter={monthFilter} />
+          <DashboardCharts monthFilter={monthFilter} />
         </main>
       </div>
     </TransactionProvider>
