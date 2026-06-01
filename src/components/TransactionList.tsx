@@ -14,7 +14,7 @@ interface Props {
   onMonthFilterChange: (month: string) => void;
 }
 
-function exportCSV(transactions: Transaction[]) {
+function exportCSV(transactions: Transaction[], fileName: string) {
   const header = "Tanggal,Tipe,Kategori,Deskripsi,Jumlah\n";
   const rows = transactions.map((t) =>
     `${t.date},${t.type === "income" ? "Pemasukan" : "Pengeluaran"},${t.category},"${t.description}",${t.amount}`
@@ -23,7 +23,7 @@ function exportCSV(transactions: Transaction[]) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "transaksi.csv";
+  a.download = fileName;
   a.click();
   URL.revokeObjectURL(url);
   toast.success("CSV berhasil diunduh!");
@@ -47,6 +47,7 @@ function importCSV(file: File, addTransaction: (t: Omit<Transaction, "id">) => v
         return;
       }
 
+      const parsedRows: Omit<Transaction, "id">[] = [];
       let imported = 0;
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
@@ -81,8 +82,13 @@ function importCSV(file: File, addTransaction: (t: Omit<Transaction, "id">) => v
           continue;
         }
 
-        addTransaction({ type, amount, category, description, date });
+        parsedRows.push({ type, amount, category, description, date });
         imported++;
+      }
+
+      // Preserve original CSV order: addTransaction prepends, so add parsed rows in reverse
+      for (let i = parsedRows.length - 1; i >= 0; i--) {
+        addTransaction(parsedRows[i]);
       }
 
       if (imported > 0) {
@@ -98,12 +104,13 @@ function importCSV(file: File, addTransaction: (t: Omit<Transaction, "id">) => v
 }
 
 export default function TransactionList({ monthFilter, onMonthFilterChange }: Props) {
-  const { transactions, deleteTransaction, addTransaction } = useTransactions();
+  const { transactions, deleteTransaction, addTransaction, deleteAll } = useTransactions();
   const [formOpen, setFormOpen] = useState(false);
   const [editTx, setEditTx] = useState<Transaction | null>(null);
   const [sortAsc, setSortAsc] = useState(false);
   const [search, setSearch] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleteAllConfirm, setDeleteAllConfirm] = useState(false);
 
   const months = useMemo(() => {
     const set = new Set(transactions.map((t) => getMonthYear(t.date)));
@@ -189,8 +196,31 @@ export default function TransactionList({ monthFilter, onMonthFilterChange }: Pr
               <Button variant="outline" size="icon" onClick={() => setSortAsc(!sortAsc)} title="Urutkan" className="border-2 border-border shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
                 <ArrowUpDown className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="icon" onClick={() => exportCSV(filtered)} title="Export CSV" disabled={filtered.length === 0} className="border-2 border-border shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  const filename = monthFilter === "all"
+                    ? "transaksi-semua-bulan.csv"
+                    : `transaksi-${formatMonthLabel(monthFilter).toLowerCase().replace(/ /g, "-")}.csv`;
+                  exportCSV(filtered, filename);
+                }}
+                title="Export CSV"
+                disabled={filtered.length === 0}
+                className="border-2 border-border shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+              >
                 <Download className="h-4 w-4" />
+              </Button>
+              {/* Small delete-all button visible when a month is selected and there are transactions */}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setDeleteAllConfirm(true)}
+                title="Hapus Semua"
+                disabled={filtered.length === 0}
+                className="border-2 border-border text-expense hover:text-expense shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+              >
+                <Trash2 className="h-4 w-4" />
               </Button>
             </>
           )}
@@ -262,22 +292,48 @@ export default function TransactionList({ monthFilter, onMonthFilterChange }: Pr
       <TransactionForm open={formOpen} onClose={() => setFormOpen(false)} editTx={editTx} />
 
       <AlertDialog open={deleteConfirm !== null} onOpenChange={(v) => !v && setDeleteConfirm(null)}>
-        <AlertDialogContent className="border-2 border-border shadow-brutal-lg rounded-md">
+        <AlertDialogContent className="w-[calc(100%-2rem)] mx-auto sm:w-auto sm:mx-0 sm:max-w-lg border-2 border-border shadow-brutal-lg rounded-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-bold text-lg">Hapus Transaksi?</AlertDialogTitle>
             <AlertDialogDescription className="text-base">
               Apakah Anda yakin ingin menghapus transaksi ini? Tindakan ini tidak dapat dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="flex gap-2 justify-end">
-            <AlertDialogCancel className="border-2 border-border shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all font-bold">
+          <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end items-stretch">
+            <AlertDialogCancel className="w-full sm:w-auto border-2 border-border shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all font-bold">
               Batal
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
-              className="bg-expense hover:bg-expense/90 text-white border-2 border-border shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all font-bold"
+              className="w-full sm:w-auto bg-expense hover:bg-expense/90 text-white border-2 border-border shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all font-bold"
             >
               Hapus
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={deleteAllConfirm} onOpenChange={(v) => !v && setDeleteAllConfirm(false)}>
+        <AlertDialogContent className="w-[calc(100%-2rem)] mx-auto sm:w-auto sm:mx-0 sm:max-w-lg border-2 border-border shadow-brutal-lg rounded-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-bold text-lg">Hapus Semua Transaksi?</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              {monthFilter === "all" ? "Apakah Anda yakin ingin menghapus SEMUA transaksi?" : "Apakah Anda yakin ingin menghapus semua transaksi pada bulan yang dipilih? Tindakan ini tidak dapat dibatalkan."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end items-stretch">
+            <AlertDialogCancel className="w-full sm:w-auto border-2 border-border shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all font-bold">
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const month = monthFilter === "all" ? undefined : monthFilter;
+                deleteAll(month);
+                setDeleteAllConfirm(false);
+                toast.success("Transaksi berhasil dihapus!");
+              }}
+              className="w-full sm:w-auto bg-expense hover:bg-expense/90 text-white border-2 border-border shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all font-bold"
+            >
+              Hapus Semua
             </AlertDialogAction>
           </div>
         </AlertDialogContent>

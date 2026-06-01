@@ -16,6 +16,7 @@ interface TransactionContextValue {
   addTransaction: (t: Omit<Transaction, "id">) => void;
   updateTransaction: (t: Transaction) => void;
   deleteTransaction: (id: string) => void;
+  deleteAll: (month?: string) => void;
 }
 
 const TransactionContext = createContext<TransactionContextValue | null>(null);
@@ -51,8 +52,24 @@ export const TransactionProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setTransactions((prev) => prev.filter((tx) => tx.id !== id));
   }, []);
 
+  const deleteAll = useCallback((month?: string) => {
+    if (!month) {
+      setTransactions([]);
+      return;
+    }
+    setTransactions((prev) => prev.filter((tx) => {
+      try {
+        const d = new Date(tx.date);
+        const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        return m !== month;
+      } catch {
+        return true;
+      }
+    }));
+  }, []);
+
   return (
-    <TransactionContext.Provider value={{ transactions, addTransaction, updateTransaction, deleteTransaction }}>
+    <TransactionContext.Provider value={{ transactions, addTransaction, updateTransaction, deleteTransaction, deleteAll }}>
       {children}
     </TransactionContext.Provider>
   );
